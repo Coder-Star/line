@@ -124,12 +124,12 @@ class LiveActivityManager: ObservableObject {
         }
         
         do {
-            let attributes = LineChartAttributes(chartName: "股价趋势")
+            let attributes = LineChartAttributes(appName: "Mood Tracker")
             let contentState = LineChartAttributes.ContentState(
-                dataPoints: currentData.dataPoints,
-                title: currentData.title,
+                selectedFeeling: "Demo",
                 currentValue: currentData.currentValue,
-                trend: currentData.trend,
+                deltaValue: 0,
+                dataPoints: currentData.dataPoints,
                 lastUpdated: currentData.lastUpdated
             )
             
@@ -184,10 +184,10 @@ class LiveActivityManager: ObservableObject {
     private func updateRealLiveActivity(activity: Activity<LineChartAttributes>) {
         Task {
             let contentState = LineChartAttributes.ContentState(
-                dataPoints: currentData.dataPoints,
-                title: currentData.title,
+                selectedFeeling: "Demo",
                 currentValue: currentData.currentValue,
-                trend: currentData.trend,
+                deltaValue: 0,
+                dataPoints: currentData.dataPoints,
                 lastUpdated: currentData.lastUpdated
             )
             
@@ -266,7 +266,110 @@ class LiveActivityManager: ObservableObject {
         print("🛑 模拟Live Activity已停止")
     }
     
-    // 更新数据
+    // 更新情感数据
+    func updateSentimentData(selectedFeeling: String, 
+                           currentValue: Double, 
+                           deltaValue: Double,
+                           dataPoints: [Double],
+                           oneHourBefore: Double?,
+                           sixHoursBefore: Double?,
+                           oneDayBefore: Double?,
+                           oneWeekBefore: Double?) {
+        
+        // 如果活动已启动，更新情感Live Activity
+        if isActivityActive {
+            updateSentimentLiveActivity(
+                selectedFeeling: selectedFeeling,
+                currentValue: currentValue,
+                deltaValue: deltaValue,
+                dataPoints: dataPoints,
+                oneHourBefore: oneHourBefore,
+                sixHoursBefore: sixHoursBefore,
+                oneDayBefore: oneDayBefore,
+                oneWeekBefore: oneWeekBefore
+            )
+        }
+    }
+    
+    // 启动情感Live Activity
+    func startSentimentLiveActivity(selectedFeeling: String, currentValue: Double) {
+        #if canImport(ActivityKit)
+        if #available(iOS 16.1, *) {
+            guard checkActivityPermission() else {
+                activityError = "Live Activities权限未开启，请在设置→通知中开启"
+                return
+            }
+            
+            do {
+                let attributes = LineChartAttributes(appName: "Mood Tracker")
+                let contentState = LineChartAttributes.ContentState(
+                    selectedFeeling: selectedFeeling,
+                    currentValue: currentValue,
+                    deltaValue: 0,
+                    dataPoints: [currentValue],
+                    lastUpdated: Date()
+                )
+                
+                let activity = try Activity.request(
+                    attributes: attributes,
+                    content: .init(state: contentState, staleDate: nil),
+                    pushType: nil
+                )
+                
+                currentActivity = activity
+                isActivityActive = true
+                activityError = nil
+                print("🎉 情感Live Activity启动成功 - \(selectedFeeling): \(currentValue)")
+                
+            } catch {
+                activityError = "启动Live Activity失败: \(error.localizedDescription)"
+                print("❌ 启动情感Live Activity失败: \(error)")
+            }
+        }
+        #endif
+    }
+    
+    // 更新情感Live Activity
+    private func updateSentimentLiveActivity(selectedFeeling: String,
+                                           currentValue: Double,
+                                           deltaValue: Double,
+                                           dataPoints: [Double],
+                                           oneHourBefore: Double?,
+                                           sixHoursBefore: Double?,
+                                           oneDayBefore: Double?,
+                                           oneWeekBefore: Double?) {
+        #if canImport(ActivityKit)
+        if #available(iOS 16.1, *), let activity = currentActivity {
+            Task {
+                let contentState = LineChartAttributes.ContentState(
+                    selectedFeeling: selectedFeeling,
+                    currentValue: currentValue,
+                    deltaValue: deltaValue,
+                    dataPoints: dataPoints,
+                    oneHourBefore: oneHourBefore,
+                    sixHoursBefore: sixHoursBefore,
+                    oneDayBefore: oneDayBefore,
+                    oneWeekBefore: oneWeekBefore,
+                    lastUpdated: Date()
+                )
+                
+                let updatedContent = ActivityContent(state: contentState, staleDate: nil)
+                
+                do {
+                    await activity.update(updatedContent)
+                    print("✅ 情感Live Activity更新成功 - \(selectedFeeling): \(currentValue) (\(deltaValue >= 0 ? "+" : "")\(deltaValue))")
+                } catch {
+                    print("❌ 更新情感Live Activity失败: \(error)")
+                    await MainActor.run {
+                        self.activityError = "更新失败: \(error.localizedDescription)"
+                    }
+                }
+            }
+        }
+        #endif
+    }
+    
+    // 更新数据（保留原有方法以兼容性）
     func updateData(dataPoints: [Double]) {
         let lastValue = dataPoints.last ?? 0
         let previousValue = dataPoints.count > 1 ? dataPoints[dataPoints.count - 2] : lastValue

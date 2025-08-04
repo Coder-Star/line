@@ -161,12 +161,23 @@ struct LoginView: View {
             Text("You have successfully logged in to YouTube. Welcome!")
         }
         .sheet(isPresented: $showingYouTubeLogin) {
-            YouTubeWebViewSheet(cookies: .constant([:]), onCookiesUpdated: { extractedCookies in
-                // 保存登录状态到AuthManager
-                authManager.saveAuthState(cookies: extractedCookies)
-                // 显示登录成功提示
-                showLoginSuccessAlert = true
-            })
+            YouTubeWebViewSheet(
+                cookies: .constant([:]), 
+                onCookiesUpdated: { extractedCookies in
+                    print("🍪 提取到的cookies: \(extractedCookies.keys.sorted())")
+                    
+                    // 保存登录状态到AuthManager
+                    authManager.saveAuthState(cookies: extractedCookies)
+                    
+                    // 登录状态已在sheet内部处理，不在这里显示alert
+                },
+                onLoginSuccess: {
+                    // 用户点击Continue后的回调
+                    print("🎉 用户确认登录成功")
+                    authManager.confirmLogin()
+                    onConnected()
+                }
+            )
         }
     }
 }

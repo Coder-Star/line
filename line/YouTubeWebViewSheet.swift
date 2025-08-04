@@ -13,8 +13,11 @@ struct YouTubeWebViewSheet: View {
     @Environment(\.dismiss) private var dismiss
     @Binding var cookies: [String: String]
     let onCookiesUpdated: ([String: String]) -> Void
+    let onLoginSuccess: () -> Void
     @State private var isLoading = true
     @State private var webView: WKWebView?
+    @State private var showSuccessMessage = false
+    @State private var isClosing = false
     
     var body: some View {
         NavigationView {
@@ -36,22 +39,41 @@ struct YouTubeWebViewSheet: View {
                     onCookiesExtracted: { extractedCookies in
                         self.cookies = extractedCookies
                         self.onCookiesUpdated(extractedCookies)
-                        // 获取到Cookie后自动返回
-                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-                            dismiss()
+                        
+                        print("🎉 准备显示成功消息")
+                        // 显示成功消息，等待用户手动确认
+                        DispatchQueue.main.async {
+                            showSuccessMessage = true
+                            print("✅ 成功消息状态已设置为true")
                         }
                     }
                 )
-            }
-            .navigationTitle("YouTube Login")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .navigationBarLeading) {
-                    Button("Cancel") {
-                        dismiss()
                     }
+        .navigationTitle("YouTube Login")
+        .navigationBarTitleDisplayMode(.inline)
+        .toolbar {
+            ToolbarItem(placement: .navigationBarLeading) {
+                Button("Cancel") {
+                    dismiss()
                 }
             }
+        }
+        .alert("Login Successful!", isPresented: $showSuccessMessage) {
+            Button("Continue") {
+                print("👆 用户点击了Continue按钮")
+                
+                // 先关闭YouTube页面
+                dismiss()
+                
+                // 等YouTube页面完全收起来后再触发跳转
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.8) {
+                    print("🔄 YouTube页面已关闭，开始跳转到FeelingView")
+                    onLoginSuccess()
+                }
+            }
+        } message: {
+            Text("You have successfully logged in to YouTube. Welcome!")
+        }
         }
     }
 }

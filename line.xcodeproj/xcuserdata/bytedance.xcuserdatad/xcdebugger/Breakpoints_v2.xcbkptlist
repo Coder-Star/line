@@ -3,4 +3,198 @@
    uuid = "1DCEB51E-64F1-4C24-ABCB-0C11C5368F14"
    type = "1"
    version = "2.0">
+   <Breakpoints>
+      <BreakpointProxy
+         BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
+         <BreakpointContent
+            uuid = "966EFBC8-8797-4A8F-813E-D63F13243C46"
+            shouldBeEnabled = "Yes"
+            ignoreCount = "0"
+            continueAfterRunningActions = "No"
+            filePath = "line/SentimentStreamManager.swift"
+            startingColumnNumber = "9223372036854775807"
+            endingColumnNumber = "9223372036854775807"
+            startingLineNumber = "66"
+            endingLineNumber = "66"
+            landmarkName = "connectToStream()"
+            landmarkType = "7">
+            <Locations>
+               <Location
+                  uuid = "966EFBC8-8797-4A8F-813E-D63F13243C46 - 12743ebc9a693ca0"
+                  shouldBeEnabled = "Yes"
+                  ignoreCount = "0"
+                  continueAfterRunningActions = "No"
+                  symbolName = "property wrapper backing initializer of line.SentimentStreamManager.connectionError : Swift.Optional&lt;Swift.String&gt;"
+                  moduleName = "line.debug.dylib"
+                  usesParentBreakpointCondition = "Yes"
+                  urlString = "file:///Users/bytedance/Desktop/line/line/SentimentStreamManager.swift"
+                  startingColumnNumber = "9223372036854775807"
+                  endingColumnNumber = "9223372036854775807"
+                  startingLineNumber = "0"
+                  endingLineNumber = "0">
+               </Location>
+               <Location
+                  uuid = "966EFBC8-8797-4A8F-813E-D63F13243C46 - 7b1e894851dddde"
+                  shouldBeEnabled = "Yes"
+                  ignoreCount = "0"
+                  continueAfterRunningActions = "No"
+                  symbolName = "line.SentimentStreamManager.connectionError.getter : Swift.Optional&lt;Swift.String&gt;"
+                  moduleName = "line.debug.dylib"
+                  usesParentBreakpointCondition = "Yes"
+                  urlString = "file:///Users/bytedance/Desktop/line/line/SentimentStreamManager.swift"
+                  startingColumnNumber = "9223372036854775807"
+                  endingColumnNumber = "9223372036854775807"
+                  startingLineNumber = "0"
+                  endingLineNumber = "0">
+               </Location>
+               <Location
+                  uuid = "966EFBC8-8797-4A8F-813E-D63F13243C46 - 41b597fad8bf6448"
+                  shouldBeEnabled = "Yes"
+                  ignoreCount = "0"
+                  continueAfterRunningActions = "No"
+                  symbolName = "line.SentimentStreamManager.connectionError.setter : Swift.Optional&lt;Swift.String&gt;"
+                  moduleName = "line.debug.dylib"
+                  usesParentBreakpointCondition = "Yes"
+                  urlString = "file:///Users/bytedance/Desktop/line/line/SentimentStreamManager.swift"
+                  startingColumnNumber = "9223372036854775807"
+                  endingColumnNumber = "9223372036854775807"
+                  startingLineNumber = "66"
+                  endingLineNumber = "66">
+               </Location>
+               <Location
+                  uuid = "966EFBC8-8797-4A8F-813E-D63F13243C46 - 3f821169a77e785b"
+                  shouldBeEnabled = "Yes"
+                  ignoreCount = "0"
+                  continueAfterRunningActions = "No"
+                  symbolName = "line.SentimentStreamManager.connectionError.modify : Swift.Optional&lt;Swift.String&gt;"
+                  moduleName = "line.debug.dylib"
+                  usesParentBreakpointCondition = "Yes"
+                  urlString = "file:///Users/bytedance/Desktop/line/line/SentimentStreamManager.swift"
+                  startingColumnNumber = "9223372036854775807"
+                  endingColumnNumber = "9223372036854775807"
+                  startingLineNumber = "66"
+                  endingLineNumber = "66">
+               </Location>
+               <Location
+                  uuid = "966EFBC8-8797-4A8F-813E-D63F13243C46 - 19acd29fe37151f7"
+                  shouldBeEnabled = "Yes"
+                  ignoreCount = "0"
+                  continueAfterRunningActions = "No"
+                  symbolName = "line.SentimentStreamManager.connectionError.modify : Swift.Optional&lt;Swift.String&gt; with unmangled suffix &quot;.resume.0&quot;"
+                  moduleName = "line.debug.dylib"
+                  usesParentBreakpointCondition = "Yes"
+                  urlString = "file:///%3Ccompiler-generated%3E"
+                  startingColumnNumber = "9223372036854775807"
+                  endingColumnNumber = "9223372036854775807"
+                  startingLineNumber = "0"
+                  endingLineNumber = "0">
+               </Location>
+               <Location
+                  uuid = "966EFBC8-8797-4A8F-813E-D63F13243C46 - 35e6f1d1e6cd329"
+                  shouldBeEnabled = "Yes"
+                  ignoreCount = "0"
+                  continueAfterRunningActions = "No"
+                  symbolName = "line.SentimentStreamManager.$connectionError.getter : Combine.Published&lt;Swift.Optional&lt;Swift.String&gt;&gt;.Publisher"
+                  moduleName = "line.debug.dylib"
+                  usesParentBreakpointCondition = "Yes"
+                  urlString = "file:///Users/bytedance/Desktop/line/line/SentimentStreamManager.swift"
+                  startingColumnNumber = "9223372036854775807"
+                  endingColumnNumber = "9223372036854775807"
+                  startingLineNumber = "0"
+                  endingLineNumber = "0">
+               </Location>
+               <Location
+                  uuid = "966EFBC8-8797-4A8F-813E-D63F13243C46 - 240045682d5766d7"
+                  shouldBeEnabled = "Yes"
+                  ignoreCount = "0"
+                  continueAfterRunningActions = "No"
+                  symbolName = "line.SentimentStreamManager.$connectionError.setter : Combine.Published&lt;Swift.Optional&lt;Swift.String&gt;&gt;.Publisher"
+                  moduleName = "line.debug.dylib"
+                  usesParentBreakpointCondition = "Yes"
+                  urlString = "file:///Users/bytedance/Desktop/line/line/SentimentStreamManager.swift"
+                  startingColumnNumber = "9223372036854775807"
+                  endingColumnNumber = "9223372036854775807"
+                  startingLineNumber = "66"
+                  endingLineNumber = "66">
+               </Location>
+               <Location
+                  uuid = "966EFBC8-8797-4A8F-813E-D63F13243C46 - 3c7a0f8111c3bda6"
+                  shouldBeEnabled = "Yes"
+                  ignoreCount = "0"
+                  continueAfterRunningActions = "No"
+                  symbolName = "line.SentimentStreamManager.$connectionError.modify : Combine.Published&lt;Swift.Optional&lt;Swift.String&gt;&gt;.Publisher"
+                  moduleName = "line.debug.dylib"
+                  usesParentBreakpointCondition = "Yes"
+                  urlString = "file:///Users/bytedance/Desktop/line/line/SentimentStreamManager.swift"
+                  startingColumnNumber = "9223372036854775807"
+                  endingColumnNumber = "9223372036854775807"
+                  startingLineNumber = "66"
+                  endingLineNumber = "66">
+               </Location>
+               <Location
+                  uuid = "966EFBC8-8797-4A8F-813E-D63F13243C46 - bd46952da979be91"
+                  shouldBeEnabled = "Yes"
+                  ignoreCount = "0"
+                  continueAfterRunningActions = "No"
+                  symbolName = "line.SentimentStreamManager.$connectionError.modify : Combine.Published&lt;Swift.Optional&lt;Swift.String&gt;&gt;.Publisher with unmangled suffix &quot;.resume.0&quot;"
+                  moduleName = "line.debug.dylib"
+                  usesParentBreakpointCondition = "Yes"
+                  urlString = "file:///%3Ccompiler-generated%3E"
+                  startingColumnNumber = "9223372036854775807"
+                  endingColumnNumber = "9223372036854775807"
+                  startingLineNumber = "0"
+                  endingLineNumber = "0">
+               </Location>
+            </Locations>
+         </BreakpointContent>
+      </BreakpointProxy>
+      <BreakpointProxy
+         BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
+         <BreakpointContent
+            uuid = "EC6017B0-1A1B-40BD-97A8-CB5331547228"
+            shouldBeEnabled = "Yes"
+            ignoreCount = "0"
+            continueAfterRunningActions = "No"
+            filePath = "line/SentimentStreamManager.swift"
+            startingColumnNumber = "9223372036854775807"
+            endingColumnNumber = "9223372036854775807"
+            startingLineNumber = "56"
+            endingLineNumber = "56"
+            landmarkName = "init()"
+            landmarkType = "7">
+         </BreakpointContent>
+      </BreakpointProxy>
+      <BreakpointProxy
+         BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
+         <BreakpointContent
+            uuid = "921735CB-C1F6-4285-A6CE-85A8D522D83A"
+            shouldBeEnabled = "No"
+            ignoreCount = "0"
+            continueAfterRunningActions = "No"
+            filePath = "line/New/SentimentStreamManager.swift"
+            startingColumnNumber = "9223372036854775807"
+            endingColumnNumber = "9223372036854775807"
+            startingLineNumber = "126"
+            endingLineNumber = "126"
+            landmarkName = "connectToStream()"
+            landmarkType = "7">
+         </BreakpointContent>
+      </BreakpointProxy>
+      <BreakpointProxy
+         BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
+         <BreakpointContent
+            uuid = "0264EFA5-1995-4323-AF80-583DA45C7525"
+            shouldBeEnabled = "No"
+            ignoreCount = "0"
+            continueAfterRunningActions = "No"
+            filePath = "line/New/MainNavigationView.swift"
+            startingColumnNumber = "9223372036854775807"
+            endingColumnNumber = "9223372036854775807"
+            startingLineNumber = "53"
+            endingLineNumber = "53"
+            landmarkName = "body"
+            landmarkType = "24">
+         </BreakpointContent>
+      </BreakpointProxy>
+   </Breakpoints>
 </Bucket>

@@ -138,8 +138,11 @@ struct FeelingView: View {
                         feeling: feeling,
                         isSelected: selectedFeeling == feeling.name
                     ) {
+                        print("🎯 用户选择了情感: \(feeling.name)")
                         selectedFeeling = feeling.name
+                        print("🔄 更新selectedFeeling为: \(selectedFeeling)")
                         onFeelingSelected(feeling.name)
+                        print("✅ 调用onFeelingSelected回调完成")
                     }
                 }
             }

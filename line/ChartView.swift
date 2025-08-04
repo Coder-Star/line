@@ -11,189 +11,337 @@ struct ChartView: View {
     let selectedFeeling: String
     let onBackToSelection: () -> Void
     let onGoToSettings: () -> Void
-    @StateObject private var activityManager = LiveActivityManager()
-    @State private var updateTimer: Timer?
+    @StateObject private var sentimentManager = SentimentStreamManager()
+    @State private var showConnectionStatus = false
+    
+    // 缓存状态信息以避免线程问题
+    @State private var cachedConnectionStatus = false
+    @State private var cachedConnectionError: String?
+    @State private var cachedDataCount = 0
+    @State private var cachedLastUpdate: String?
     
     var body: some View {
         ZStack {
-            // 背景渐变
-            LinearGradient(
-                colors: [
-                    Color.blue.opacity(0.3),
-                    Color.purple.opacity(0.3),
-                    Color.pink.opacity(0.2)
-                ],
-                startPoint: .topLeading,
-                endPoint: .bottomTrailing
-            )
-            .ignoresSafeArea()
+            // 底层：common_bg背景 - 铺满整个屏幕 (与FeelingView保持一致)
+            GeometryReader { geometry in
+                Image("common_bg")
+                    .resizable()
+                    .scaledToFill()
+                    .frame(
+                        width: geometry.size.width,
+                        height: geometry.size.height + geometry.safeAreaInsets.top + geometry.safeAreaInsets.bottom
+                    )
+                    .clipped()
+                    .offset(y: -geometry.safeAreaInsets.top)
+            }
+            .ignoresSafeArea(.all)
             
-            VStack(spacing: 30) {
-                // 右上角设置按钮
-                HStack {
-                    Spacer()
-                    Button(action: {
-                        onGoToSettings()
-                    }) {
-                        Image(systemName: "gearshape")
-                            .font(.system(size: 24))
-                            .foregroundColor(.white)
-                            .background(
-                                Circle()
-                                    .fill(Color.white.opacity(0.2))
-                                    .frame(width: 44, height: 44)
-                            )
+            GeometryReader { geometry in
+                VStack(spacing: 15) {
+                    // 右上角设置按钮
+                    HStack {
+                        Spacer()
+                        Button(action: {
+                            onGoToSettings()
+                        }) {
+                            Image(systemName: "gear")
+                                .font(.system(size: 24))
+                                .foregroundColor(.white)
+                                .background(
+                                    Circle()
+                                        .fill(Color.white.opacity(0.2))
+                                        .frame(width: 44, height: 44)
+                                )
+                        }
                     }
-                }
-                .padding(.horizontal, 30)
-                .padding(.top, 60)
+                    .padding(.horizontal, 30)
                 
-                // 标题区域
-                VStack(spacing: 12) {
-                    if !selectedFeeling.isEmpty {
-                        Text(selectedFeeling)
-                            .font(.system(size: 48, weight: .bold))
-                            .foregroundColor(.white)
-                    } else {
-                        Text("Select a Feeling")
-                            .font(.system(size: 32, weight: .bold))
-                            .foregroundColor(.white.opacity(0.6))
+                // 顶部信息区域
+                HStack {
+                    // 左侧：情感名称和当前数值
+                    VStack(alignment: .leading, spacing: 4) {
+                        if !selectedFeeling.isEmpty {
+                            Text(selectedFeeling)
+                                .font(.system(size: 32, weight: .bold))
+                                .foregroundColor(.white)
+                            
+                            // 只有在收到真实数据时才显示数值
+                            if sentimentManager.latestData != nil || !sentimentManager.dataHistory.isEmpty {
+                                Text("\(Int(sentimentManager.getCurrentValue(for: selectedFeeling)))")
+                                    .font(.system(size: 48, weight: .bold))
+                                    .foregroundColor(.white)
+                            } else {
+                                Text("--")
+                                    .font(.system(size: 48, weight: .bold))
+                                    .foregroundColor(.white.opacity(0.5))
+                            }
+                        } else {
+                            Text("No Feeling")
+                                .font(.system(size: 32, weight: .bold))
+                                .foregroundColor(.white.opacity(0.6))
+                        }
                     }
                     
-                    // 当前数值显示
-                    VStack(spacing: 4) {
-                        Text("Current Value")
-                            .font(.caption)
-                            .foregroundColor(.white.opacity(0.7))
-                        
-                        Text("\(String(format: "%.1f", activityManager.currentData.currentValue))")
-                            .font(.system(size: 36, weight: .bold, design: .rounded))
-                            .foregroundColor(.white)
+                    Spacer()
+                    
+                    // 右侧：增量和更新时间
+                    VStack(alignment: .trailing, spacing: 4) {
+                        if let latestData = sentimentManager.latestData {
+                            let deltaValue = latestData.sentiment.getValue(for: selectedFeeling)
+                            Text(deltaValue >= 0 ? "+\(Int(deltaValue))" : "\(Int(deltaValue))")
+                                .font(.system(size: 24, weight: .bold))
+                                .foregroundColor(deltaValue >= 0 ? .green : .red)
+                            
+                            Text("Updated \(formatTimeAgo(latestData.timestamp))")
+                                .font(.caption)
+                                .foregroundColor(.white.opacity(0.7))
+                        } else {
+                            Text("--")
+                                .font(.system(size: 24, weight: .bold))
+                                .foregroundColor(.white.opacity(0.5))
+                            
+                            Text("No updates")
+                                .font(.caption)
+                                .foregroundColor(.white.opacity(0.5))
+                        }
                     }
-                    .padding()
-                    .background(Color.white.opacity(0.1))
-                    .cornerRadius(12)
                 }
-                .padding(.top, 60)
                 .padding(.horizontal, 30)
+                .padding(.top, 10)
                 
                 // 折线图区域
-                VStack(alignment: .leading, spacing: 12) {
+                VStack(spacing: 20) {
+                    // 图表
                     LineChartView(
-                        dataPoints: activityManager.currentData.dataPoints.map { CGFloat($0) },
-                        lineColor: feelingColor(for: selectedFeeling),
+                        dataPoints: sentimentManager.getDataPoints(for: selectedFeeling).map { CGFloat($0) },
+                        lineColor: .white,
                         lineWidth: 4,
                         showDots: true,
-                        animated: true
+                        animated: true,
+                        showGrid: false,
+                        showValues: false,
+                        showReferenceLine: false,
+                        referenceValue: 30,
+                        minYValue: 0,
+                        maxYValue: 100,
+                        smoothness: 0.8
                     )
-                    .frame(height: 250)
-                    .padding(.horizontal)
-                    .background(
-                        RoundedRectangle(cornerRadius: 16)
-                            .fill(Color.white.opacity(0.1))
-                            .backdrop(blur: 10)
-                    )
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 16)
-                            .stroke(Color.white.opacity(0.2), lineWidth: 1)
-                    )
-                }
-                .padding(.horizontal, 20)
-                
-                // 控制按钮
-                VStack(spacing: 12) {
-                    HStack(spacing: 16) {
-                        Button(action: {
-                            activityManager.simulateDataUpdate()
-                        }) {
-                            Label("Update Data", systemImage: "arrow.clockwise")
-                                .frame(maxWidth: .infinity)
+                    .frame(height: 200)
+                    .padding(.horizontal, 30)
+                    
+                    // 时间轴和历史数值
+                    VStack(spacing: 8) {
+                        HStack {
+                            TimeAxisLabel(title: "1 Week", value: getSSEHistoricalValue(period: "oneweek"))
+                            Spacer()
+                            TimeAxisLabel(title: "1 Day", value: getSSEHistoricalValue(period: "oneday"))
+                            Spacer()
+                            TimeAxisLabel(title: "12 Hours", value: getSSEHistoricalValue(period: "sixhours"))
+                            Spacer()
+                            TimeAxisLabel(title: "1 Hour", value: getSSEHistoricalValue(period: "onehour"))
                         }
-                        .buttonStyle(GlassButtonStyle())
-                        
-                        Button(action: {
-                            toggleAutoUpdate()
-                        }) {
-                            Label(updateTimer != nil ? "Stop Auto" : "Start Auto", 
-                                  systemImage: updateTimer != nil ? "pause.fill" : "play.fill")
-                                .frame(maxWidth: .infinity)
-                        }
-                        .buttonStyle(GlassButtonStyle())
+                        .padding(.horizontal, 30)
                     }
                     
-                    // Back to Selection 按钮
-                    if !selectedFeeling.isEmpty {
-                        Button("Back to Selection") {
-                            onBackToSelection()
+                    // 底部消息
+                    if let latestData = sentimentManager.latestData {
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text("Updated \(formatTimeAgo(latestData.timestamp))")
+                                .font(.caption)
+                                .foregroundColor(.white.opacity(0.6))
+                                .id("bottom-time-\(latestData.timestamp)") // 强制UI更新
+                            
+                            Text("Latest update received. Your mood is being tracked.")
+                                .font(.system(size: 16, weight: .medium))
+                                .foregroundColor(.white.opacity(0.9))
+                                .multilineTextAlignment(.leading)
                         }
-                        .frame(maxWidth: .infinity)
-                        .frame(height: 50)
-                        .background(Color.white)
-                        .foregroundColor(.black)
-                        .cornerRadius(25)
-                        .fontWeight(.medium)
+                        .padding(.horizontal, 30)
+                        .frame(maxWidth: .infinity, alignment: .leading)
                     }
                 }
-                .padding(.horizontal, 20)
+                .padding(.top, 20)
                 
-                // 状态信息
-                VStack(alignment: .leading, spacing: 8) {
-                    HStack {
-                        Text("Live Activity:")
-                            .font(.caption)
-                            .foregroundColor(.white.opacity(0.7))
-                        Text(activityManager.isActivityActive ? "Active" : "Inactive")
-                            .font(.caption)
-                            .fontWeight(.semibold)
-                            .foregroundColor(activityManager.isActivityActive ? .green : .gray)
-                    }
-                    
-                    HStack {
-                        Text("Last Updated:")
-                            .font(.caption)
-                            .foregroundColor(.white.opacity(0.7))
-                        Text(DateFormatter.shortTime.string(from: activityManager.currentData.lastUpdated))
-                            .font(.caption)
-                            .fontWeight(.medium)
-                            .foregroundColor(.white)
-                    }
-                }
-                .padding()
-                .background(Color.white.opacity(0.1))
-                .cornerRadius(8)
-                .padding(.horizontal, 20)
+
                 
                 Spacer()
+                
+                // 底部返回按钮
+                Button("Back to Feeling Selection") {
+                    // 断开SSE连接
+                    print("🔌 断开SSE连接...")
+                    sentimentManager.disconnect()
+                    
+                    // 停止Live Activity
+                    print("⏹️ 停止Live Activity...")
+                    sentimentManager.stopAllLiveActivities()
+                    
+                    // 返回到选择页面
+                    onBackToSelection()
+                }
+                .frame(maxWidth: .infinity)
+                .frame(height: 56)
+                .background(Color.white)
+                .foregroundColor(.black)
+                .cornerRadius(28)
+                .fontWeight(.semibold)
+                .padding(.horizontal, 20)
+                .padding(.bottom, 30)
+                }
             }
         }
         .navigationBarHidden(true)
-        .onDisappear {
-            updateTimer?.invalidate()
+        .onAppear {
+            print("📱 ChartView出现，检查SSE连接状态")
+            print("🔍 当前连接状态: \(sentimentManager.isConnected)")
+            print("🎯 选中的情感: '\(selectedFeeling)'")
+            
+            // 更新缓存状态
+            updateCachedStatus()
+            
+            // 强制刷新视图状态，避免布局累积问题
+            
+            // 启动Live Activity（如果选择了情感）
+            if !selectedFeeling.isEmpty {
+                print("🚀 启动Live Activity for: \(selectedFeeling)")
+                sentimentManager.startLiveActivityForFeeling(selectedFeeling)
+            }
+            
+            // 只有在未连接时才尝试连接，避免重复连接
+            if !sentimentManager.isConnected {
+                print("🔗 连接状态为false，开始连接SSE")
+                sentimentManager.connectToStream()
+            } else {
+                print("✅ 连接已存在，跳过重复连接")
+            }
         }
-    }
-    
-    private func toggleAutoUpdate() {
-        if updateTimer != nil {
-            updateTimer?.invalidate()
-            updateTimer = nil
-        } else {
-            updateTimer = Timer.scheduledTimer(withTimeInterval: 3.0, repeats: true) { _ in
-                activityManager.simulateDataUpdate()
+        .onChange(of: sentimentManager.isConnected) { _ in
+            updateCachedStatus()
+        }
+        .onChange(of: sentimentManager.connectionError) { _ in
+            updateCachedStatus()
+        }
+        .onChange(of: sentimentManager.dataHistory.count) { _ in
+            updateCachedStatus()
+        }
+        .onChange(of: sentimentManager.latestData?.timestamp) { _ in
+            updateCachedStatus()
+        }
+        .onDisappear {
+            // 页面消失时的清理工作
+            print("📱 ChartView消失，进行清理...")
+            sentimentManager.disconnect()
+            sentimentManager.stopAllLiveActivities()
+        }
+        .alert("Connection Status", isPresented: $showConnectionStatus) {
+            Button("OK") { }
+        } message: {
+            VStack(alignment: .leading) {
+                Text("Status: \(cachedConnectionStatus ? "Connected" : "Disconnected")")
+                if let error = cachedConnectionError {
+                    Text("Error: \(error)")
+                }
+                Text("Data Points: \(cachedDataCount)")
+                if let lastUpdate = cachedLastUpdate {
+                    Text("Last Update: \(lastUpdate)")
+                }
             }
         }
     }
     
-    private func feelingColor(for feeling: String) -> Color {
-        switch feeling {
-        case "Calm": return .blue
-        case "Connected": return .green
-        case "Motivated": return .gray
-        case "Stimulated": return .cyan
-        case "Focused": return .teal
-        case "Light-Hearted": return .mint
-        case "Inspired": return .purple
-        case "Curious": return .indigo
-        default: return .white
+    private func formatTimestamp(_ timestamp: String) -> String {
+        let inputFormatter = DateFormatter()
+        inputFormatter.dateFormat = "yyyy-MM-dd'T'HH:mm:ss.SSSSSS"
+        inputFormatter.timeZone = TimeZone(abbreviation: "UTC") // 服务器返回UTC时间
+        
+        if let utcDate = inputFormatter.date(from: timestamp) {
+            let outputFormatter = DateFormatter()
+            outputFormatter.dateStyle = .none
+            outputFormatter.timeStyle = .medium
+            outputFormatter.timeZone = TimeZone.current // 转换为本地时间显示
+            return outputFormatter.string(from: utcDate)
+        }
+        return timestamp
+    }
+    
+    private func formatTimeAgo(_ timestamp: String) -> String {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "yyyy-MM-dd'T'HH:mm:ss.SSSSSS"
+        formatter.timeZone = TimeZone(abbreviation: "UTC") // 服务器返回UTC时间
+        
+        if let utcDate = formatter.date(from: timestamp) {
+            let timeInterval = Date().timeIntervalSince(utcDate)
+            let minutes = Int(timeInterval / 60)
+            
+            if minutes < 1 {
+                return "just now"
+            } else if minutes < 60 {
+                return "\(minutes)min ago"
+            } else if minutes < 1440 { // 24小时内
+                let hours = minutes / 60
+                return "\(hours)hr ago"
+            } else {
+                let days = minutes / 1440
+                return "\(days)d ago"
+            }
+        }
+        return "unknown"
+    }
+    
+    // 更新缓存状态（在主线程执行）
+    private func updateCachedStatus() {
+        DispatchQueue.main.async {
+            cachedConnectionStatus = sentimentManager.isConnected
+            cachedConnectionError = sentimentManager.connectionError
+            cachedDataCount = sentimentManager.dataHistory.count
+            
+            if let latest = sentimentManager.latestData {
+                cachedLastUpdate = formatTimestamp(latest.timestamp)
+            } else {
+                cachedLastUpdate = nil
+            }
+        }
+    }
+    
+    private func getSSEHistoricalValue(period: String) -> Int? {
+        // 从SSE数据中获取历史数值，没有数据时返回nil
+        guard let latestData = sentimentManager.latestData else { return nil }
+        
+        switch period {
+        case "onehour":
+            return latestData.sentiment.onehourbefore.map { Int($0) }
+        case "sixhours":
+            return latestData.sentiment.sixhoursbefore.map { Int($0) }
+        case "oneday":
+            return latestData.sentiment.onedaybefore.map { Int($0) }
+        case "oneweek":
+            return latestData.sentiment.oneweekbefore.map { Int($0) }
+        default:
+            return nil
+        }
+    }
+}
+
+// MARK: - 时间轴标签组件
+struct TimeAxisLabel: View {
+    let title: String
+    let value: Int?
+    
+    var body: some View {
+        VStack(spacing: 4) {
+            Text(title)
+                .font(.caption)
+                .foregroundColor(.white.opacity(0.7))
+            
+            if let value = value {
+                Text(value >= 0 ? "+\(value)" : "\(value)")
+                    .font(.system(size: 16, weight: .bold))
+                    .foregroundColor(value >= 0 ? .green : .red)
+            } else {
+                Text("--")
+                    .font(.system(size: 16, weight: .bold))
+                    .foregroundColor(.white.opacity(0.5))
+            }
         }
     }
 }
@@ -205,8 +353,7 @@ struct GlassButtonStyle: ButtonStyle {
             .padding()
             .background(
                 RoundedRectangle(cornerRadius: 12)
-                    .fill(Color.white.opacity(0.1))
-                    .backdrop(blur: 10)
+                    .fill(.ultraThinMaterial)
             )
             .overlay(
                 RoundedRectangle(cornerRadius: 12)
@@ -218,15 +365,6 @@ struct GlassButtonStyle: ButtonStyle {
     }
 }
 
-// 背景模糊效果扩展
-extension View {
-    func backdrop(blur radius: CGFloat) -> some View {
-        self.background(
-            Rectangle()
-                .fill(.ultraThinMaterial)
-                .blur(radius: radius / 3)
-        )
-    }
-}
+// 移除导致CoreSVG错误的backdrop扩展
 
  

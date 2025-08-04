@@ -43,21 +43,26 @@ class AuthManager: ObservableObject {
             return
         }
         
+        // 先保存cookies，但不立即设置isLoggedIn
         self.cookies = cookies
-        self.isLoggedIn = true
-        
-        userDefaults.set(true, forKey: isLoggedInKey)
         
         if let data = try? JSONEncoder().encode(cookies) {
             userDefaults.set(data, forKey: cookiesKey)
         }
         
-        print("✅ 登录状态已保存")
+        print("✅ 登录数据已保存，等待用户确认")
         
         // 异步上传YouTube Session到后端
         Task {
             await uploadYouTubeSession()
         }
+    }
+    
+    // MARK: - 确认登录状态（用户点击Continue后调用）
+    func confirmLogin() {
+        self.isLoggedIn = true
+        userDefaults.set(true, forKey: isLoggedInKey)
+        print("✅ 登录状态已确认")
     }
     
     // MARK: - 注销
